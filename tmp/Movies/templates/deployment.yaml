@@ -1,0 +1,23 @@
+---
+# Source: Movies/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movies
+  labels:
+    app: movies
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: movies
+  template:
+    metadata:
+      labels:
+        app: movies
+    spec:
+      containers:
+        - name: movies
+          image: registry.digitallands.cloud/movies:v0.0.0
+          ports:
+            - containerPort: 8080

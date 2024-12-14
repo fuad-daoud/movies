@@ -1,0 +1,3 @@
+name: movies
+image: registry.digitallands.cloud/movies:v0.0.0
+replicas: 1

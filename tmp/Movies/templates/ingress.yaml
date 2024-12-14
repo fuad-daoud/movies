@@ -1,0 +1,19 @@
+---
+# Source: Movies/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: movies
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: 'movies.digitallands.cloud'
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: movies
+                port:
+                  number: 80
