@@ -1,5 +1,5 @@
-import {Dispatch, SetStateAction, useState} from "react";
-import {addMovie, clearMovies} from "../store/movieSlice.tsx";
+import {useState} from "react";
+import {addAllMovies, addMovie, clearMovies} from "../store/movieSlice.tsx";
 import {useDispatch, useSelector} from "react-redux";
 import {Alert, IconButton, Input, CircularProgress} from "@mui/material";
 import AddIcon from '@mui/icons-material/Add';
@@ -9,87 +9,111 @@ import ClearIcon from '@mui/icons-material/Clear';
 import DownloadIcon from '@mui/icons-material/Download';
 
 export function MovieInput() {
-    const [newMovie, setNewMovie] = useState("")
-    const [alert, setAlert] = useState(false)
-    const [alertText, setAlertText] = useState("")
-    const [level, setLevel]:["success" | "info" | "warning" | "error" | undefined, Dispatch<SetStateAction<"success" | "info" | "warning" | "error" | undefined>>] = useState()
-    const [loading, setLoading]:[boolean, Dispatch<boolean>] = useState(false)
-
+    const [state, setState] = useState<MovieInputState>({
+        newMovie: "",
+        alert: false,
+        alertText: "",
+        level: undefined,
+        loading: false,
+    })
     const isEmpty = useSelector(state => state.movies.movies.length == 0)
 
     const dispatch = useDispatch()
 
     const handleAddMovie = () => {
-        if (!newMovie) {
-            setAlertText("You are trying to add an empty movie");
-            setLevel("warning")
-            setAlert(true);
+        if (!state.newMovie) {
+            setState(
+                {
+                    ...state,
+                    alert: true,
+                    alertText: "You are trying to add an empty movie",
+                    level: "warning",
+                })
             return;
         }
 
-        dispatch(addMovie(newMovie))
-        setNewMovie("")
+        dispatch(addMovie(state.newMovie))
+        setState({
+            ...state,
+            newMovie: "",
+            alert: false,
+            alertText: "",
+            level: undefined,
+        })
     }
     const handleClear = () => {
         if (isEmpty) {
-            setLevel("warning")
-            setAlertText("You are trying to clear but there is no movies");
-            setAlert(true)
+            setState({
+                ...state,
+                alert: true,
+                alertText: "You are trying to clear but there is no movies",
+                level: "warning",
+            })
             return;
         }
         dispatch(clearMovies({}))
     }
     const handleDownload = async () => {
-        setLoading(true)
+        setState({
+            ...state,
+            loading: true
+        });
         try {
             const response = await fetch("/movies")
             if (response.status != 200) {
-                setLevel("error")
-                setAlertText("Something went wrong fetching data");
-                setAlert(true)
-                setLoading(false)
+                setState({
+                    ...state,
+                    alert: true,
+                    alertText: "Something went wrong fetching data",
+                    level: "error",
+                    loading: false,
+                });
                 return
             }
-
             const data = await response.json();
-
-            data.forEach((record:string) => {
-                dispatch(addMovie(record))
-            })
+            dispatch(addAllMovies(data));
+            setState({
+                ...state,
+                loading: false,
+            });
         } catch (error) {
             console.error(error)
-            setLevel("error")
-            setAlertText("Something went wrong fetching data");
-            setAlert(true)
-            return
-        } finally {
-            setLoading(false)
+            setState({
+                ...state,
+                level: "error",
+                alertText: "Something went wrong fetching data",
+                alert: true,
+                loading: false,
+            });
         }
 
     }
-    const handleOnChange = (event: { target: { value: SetStateAction<string>; }; }) => {
-        setNewMovie(event.target.value)
+    const handleOnChange = (event: { target: { value: string }; }) => {
+        setState({
+            ...state,
+            newMovie: event.target.value
+        })
     }
 
 
     return (
         <>
-            <Input disabled={alert} placeholder="My Favorite Movie" onChange={handleOnChange} value={newMovie}/>
-            <IconButton disabled={alert} color="primary" sx={{p: '10px'}} aria-label="directions"
+            <Input disabled={state.alert} placeholder="My Favorite Movie" onChange={handleOnChange} value={state.newMovie}/>
+            <IconButton disabled={state.alert} color="primary" sx={{p: '10px'}} aria-label="directions"
                         onClick={handleAddMovie}>
                 <AddIcon/>
             </IconButton>
-            <IconButton disabled={alert} color="primary" sx={{p: '10px'}} aria-label="directions" onClick={handleClear}>
+            <IconButton disabled={state.alert} color="primary" sx={{p: '10px'}} aria-label="directions" onClick={handleClear}>
                 <ClearIcon/>
             </IconButton>
-            <IconButton disabled={alert || loading} color="primary" sx={{p: '10px'}} aria-label="directions"
+            <IconButton disabled={state.alert || state.loading} color="primary" sx={{p: '10px'}} aria-label="directions"
                         onClick={handleDownload}>
-                {loading ? <CircularProgress size={24} /> : <DownloadIcon />}
+                {state.loading ? <CircularProgress size={24} /> : <DownloadIcon />}
             </IconButton>
 
-            <Collapse in={alert}>
+            <Collapse in={state.alert}>
                 <Alert
-                    severity={level}
+                    severity={state.level}
                     variant="filled"
                     action={
                         <IconButton
@@ -97,15 +121,26 @@ export function MovieInput() {
                             color="inherit"
                             size="small"
                             onClick={() => {
-                                setAlert(false);
+                                setState({
+                                    ...state,
+                                    alert: false
+                                })
                             }}
                         >
                             <CloseIcon fontSize="inherit"/>
                         </IconButton>
                     }
                     sx={{mb: 2}}
-                >{alertText}</Alert>
+                >{state.alertText}</Alert>
             </Collapse>
         </>
     )
+}
+
+interface MovieInputState {
+    newMovie: string,
+    alert: boolean,
+    alertText: string,
+    level: "success" | "info" | "warning" | "error" | undefined,
+    loading: boolean,
 }
