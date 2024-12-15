@@ -1,6 +1,6 @@
 namespace=movies
 release=marco
-image=registry.digitallands.cloud/movies:v0.0.3
+image=registry.digitallands.cloud/movies:v0.0.4
 upgrade:
 	helm upgrade --install $(release) helm --timeout 1200s --create-namespace --namespace $(namespace) --set image=$(image)
 
@@ -22,3 +22,9 @@ docker-build:;
 full:
 	make docker-build
 	make upgrade
+
+
+run:
+	npm run build
+	cp -r dist go/
+	go run go/main.go
