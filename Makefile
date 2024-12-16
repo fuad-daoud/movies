@@ -1,6 +1,6 @@
 namespace=movies
 release=marco
-image=registry.digitallands.cloud/movies:v0.0.4
+image=registry.digitallands.cloud/movies:v0.0.6
 upgrade:
 	helm upgrade --install $(release) helm --timeout 1200s --create-namespace --namespace $(namespace) --set image=$(image)
 
@@ -17,6 +17,8 @@ build:
 
 docker-build:;
 	docker build . --tag $(image)
+	docker push $(image)
+	# pushing twice because the first might be just for authenticating
 	docker push $(image)
 
 full:
